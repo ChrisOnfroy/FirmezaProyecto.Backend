@@ -90,6 +90,10 @@ public static class DependencyInjection
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
         services.AddScoped<IEmailService, SmtpEmailService>();
 
+        // 8. Servicios de Exportación Profesional (Excel y PDF)
+        services.AddScoped<IExcelExportService, ExcelExportService>();
+        services.AddScoped<IPdfExportService, PdfExportService>();
+
         return services;
     }
 }

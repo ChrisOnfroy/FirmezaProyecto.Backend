@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Firmeza.Domain\Firmeza.Domain.csproj" />
     <ProjectReference Include="..\..\src\Firmeza.Application\Firmeza.Application.csproj" />
+    <ProjectReference Include="..\..\src\Firmeza.Infrastructure\Firmeza.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

@@ -11,6 +11,16 @@ public class SaleRepository : BaseRepository<Sale>, ISaleRepository
     {
     }
 
+    public async Task<IReadOnlyList<Sale>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbSet
+            .Include(s => s.Customer)
+            .Include(s => s.SaleDetails)
+                .ThenInclude(d => d.Product)
+            .OrderByDescending(s => s.SaleDate)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Sale?> GetWithDetailsByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _dbSet
@@ -23,6 +33,7 @@ public class SaleRepository : BaseRepository<Sale>, ISaleRepository
     public async Task<IReadOnlyList<Sale>> GetByCustomerIdAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .Include(s => s.Customer)
             .Include(s => s.SaleDetails)
                 .ThenInclude(d => d.Product)
             .Where(s => s.CustomerId == customerId)

@@ -12,10 +12,38 @@ namespace Firmeza.Presentation.Controllers;
 public class SalesController : ControllerBase
 {
     private readonly ISaleService _saleService;
+    private readonly IPdfExportService _pdfExportService;
 
-    public SalesController(ISaleService saleService)
+    public SalesController(ISaleService saleService, IPdfExportService pdfExportService)
     {
         _saleService = saleService;
+        _pdfExportService = pdfExportService;
+    }
+
+    [HttpGet("export/pdf")]
+    public async Task<IActionResult> ExportSalesReportToPdf([FromQuery] Guid? customerId, CancellationToken cancellationToken)
+    {
+        var sales = customerId.HasValue
+            ? await _saleService.GetByCustomerIdAsync(customerId.Value, cancellationToken)
+            : await _saleService.GetAllAsync(cancellationToken);
+
+        var pdfBytes = await _pdfExportService.ExportSalesReportToPdfAsync(sales, cancellationToken);
+        var fileName = $"Reporte_Ventas_Firmeza_{DateTime.Now:yyyyMMdd_HHmm}.pdf";
+
+        return File(pdfBytes, "application/pdf", fileName);
+    }
+
+    [HttpGet("{id:guid}/export/pdf")]
+    public async Task<IActionResult> ExportSaleInvoiceToPdf(Guid id, CancellationToken cancellationToken)
+    {
+        var sale = await _saleService.GetByIdAsync(id, cancellationToken);
+        if (sale is null)
+            return NotFound(new { message = $"Venta con Id '{id}' no encontrada." });
+
+        var pdfBytes = await _pdfExportService.ExportSaleInvoiceToPdfAsync(sale, cancellationToken);
+        var fileName = $"Factura_Venta_FZ-{sale.Id.ToString()[..8].ToUpperInvariant()}.pdf";
+
+        return File(pdfBytes, "application/pdf", fileName);
     }
 
     [HttpGet]

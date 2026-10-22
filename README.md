@@ -198,4 +198,47 @@ curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5293/api/products | j
 
 # 3. Consultar ventas registradas
 curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5293/api/sales | jq .
+
+# 4. Descargar Catálogo de Productos en Excel (.xlsx)
+curl -s http://localhost:5293/api/products/export/excel -o Catalogo_Productos.xlsx
+
+# 5. Descargar Reporte Consolidado de Ventas en PDF
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5293/api/sales/export/pdf -o Reporte_Ventas.pdf
+
+# 6. Descargar Factura de Venta Individual en PDF (reemplaza {id} por el GUID de la venta)
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5293/api/sales/{id}/export/pdf -o Factura_Venta.pdf
 ```
+
+---
+
+## 📑 Exportación Profesional de Documentos (Excel & PDF)
+
+El backend incorpora un motor de generación de reportes corporativos de alto estándar:
+
+### 1. Catálogo de Productos en Excel (`ClosedXML`)
+- **Endpoint:** `GET /api/products/export/excel` (Parámetro opcional: `?categoryId={guid}`)
+- **Características:**
+  - Encabezado con paleta corporativa Dark Navy (`#1E293B`) y tipografía limpia.
+  - Fórmulas de cálculo de inventario dinámicas (`=Precio * Stock`).
+  - Formato contable para valores monetarios (`$ #,##0.00 COP`).
+  - Filas alternadas (efecto cebra) y chips visuales de estado (ACTIVO / INACTIVO).
+  - Fila de totales consolidados con sumatoria automática (`=SUM(...)`).
+  - Panel fijo (freeze panes) en encabezados y ajuste automático de columnas.
+
+### 2. Reporte Ejecutivo de Ventas en PDF (`QuestPDF`)
+- **Endpoint:** `GET /api/sales/export/pdf` (`[Authorize]`)
+- **Características:**
+  - Formato A4 apaisado (*Landscape*) para máxima legibilidad.
+  - Tarjetas de indicadores clave (KPIs): Total Facturado, Total Ventas, Ventas Completadas y Pendientes.
+  - Tabla de transacciones con número de factura, cliente, NIT/CC, estado y total en COP.
+  - Paginación dinámica y sellos de documento confidencial.
+
+### 3. Factura / Comprobante de Venta Oficial en PDF (`QuestPDF`)
+- **Endpoint:** `GET /api/sales/{id}/export/pdf` (`[Authorize]`)
+- **Características:**
+  - Formato A4 vertical con membrete formal de *Firmeza S.A.S.* (NIT, dirección, contacto).
+  - Bloque oficial de factura con numeración `FZ-XXXXXXXX`, fecha y estado.
+  - Ficha completa del cliente (Razón social, NIT/C.C., dirección de entrega, teléfono y email).
+  - Tabla detallada de materiales: descripción, cantidad, precio unitario y subtotal.
+  - Cuadro financiero consolidado con discriminación de subtotal e importe total destacado.
+  - Notas comerciales, términos legales (Art. 774 C.Co), cuenta bancaria y casillas de firma de entrega y recibo a conformidad.

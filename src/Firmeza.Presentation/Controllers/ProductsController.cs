@@ -12,10 +12,26 @@ namespace Firmeza.Presentation.Controllers;
 public class ProductsController : ControllerBase
 {
     private readonly IProductService _productService;
+    private readonly IExcelExportService _excelExportService;
 
-    public ProductsController(IProductService productService)
+    public ProductsController(IProductService productService, IExcelExportService excelExportService)
     {
         _productService = productService;
+        _excelExportService = excelExportService;
+    }
+
+    [HttpGet("export/excel")]
+    [AllowAnonymous]
+    public async Task<IActionResult> ExportToExcel([FromQuery] Guid? categoryId, CancellationToken cancellationToken)
+    {
+        var products = categoryId.HasValue
+            ? await _productService.GetByCategoryIdAsync(categoryId.Value, cancellationToken)
+            : await _productService.GetAllAsync(cancellationToken);
+
+        var fileBytes = await _excelExportService.ExportProductsToExcelAsync(products, cancellationToken);
+        var fileName = $"Catalogo_Productos_Firmeza_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+
+        return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
 
     [HttpGet]

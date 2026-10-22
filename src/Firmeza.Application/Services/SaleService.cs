@@ -30,7 +30,7 @@ public class SaleService : ISaleService
 
     public async Task<IReadOnlyList<SaleDto>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        var sales = await _saleRepository.GetAllAsync(cancellationToken);
+        var sales = await _saleRepository.GetAllWithDetailsAsync(cancellationToken);
         return sales.Select(MapToDto).ToList();
     }
 
@@ -124,7 +124,11 @@ public class SaleService : ISaleService
     {
         Id = sale.Id,
         CustomerId = sale.CustomerId,
-        CustomerName = sale.Customer != null ? $"{sale.Customer.FirstName} {sale.Customer.LastName}" : string.Empty,
+        CustomerName = sale.Customer != null ? $"{sale.Customer.FirstName} {sale.Customer.LastName}".Trim() : string.Empty,
+        CustomerEmail = sale.Customer?.Email?.Value,
+        CustomerIdentification = sale.Customer?.Identification?.ToString(),
+        CustomerPhone = sale.Customer?.PhoneNumber?.ToString(),
+        CustomerAddress = sale.Customer?.Address?.ToString(),
         SaleDate = sale.SaleDate,
         TotalAmount = sale.TotalAmount.Amount,
         Currency = sale.TotalAmount.Currency,
