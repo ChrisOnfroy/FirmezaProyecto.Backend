@@ -1,5 +1,6 @@
 using Firmeza.Application;
 using Firmeza.Infrastructure;
+using Firmeza.Infrastructure.Context;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,17 +37,17 @@ builder.Services.AddSwaggerGen(options =>
     {
         Name = "Authorization",
         Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
+        Scheme = "bearer",
         BearerFormat = "JWT",
         In = ParameterLocation.Header,
-        Description = "Ingresa tu token JWT en el campo inferior. Ejemplo: eyJhbGciOiJIUzI1Ni..."
+        Description = "Copia y pega únicamente el token JWT obtenido en el login (sin la palabra 'Bearer'). Ejemplo: eyJhbGciOiJIUzI1Ni..."
     });
 
     // Requisito de seguridad global para Swagger UI
-    options.AddSecurityRequirement(_ => new OpenApiSecurityRequirement
+    options.AddSecurityRequirement(doc => new OpenApiSecurityRequirement
     {
         {
-            new OpenApiSecuritySchemeReference("Bearer"),
+            new OpenApiSecuritySchemeReference("Bearer", doc),
             new List<string>()
         }
     });
@@ -54,19 +55,20 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
-// Asegurar que la base de datos y todas las tablas existan al iniciar
+// Asegurar que la base de datos, todas las tablas y datos iniciales existan al iniciar
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<Firmeza.Infrastructure.Context.ApplicationDbContext>();
+        var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.EnsureCreated();
+        await DatabaseSeeder.SeedAsync(services);
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Error de conexión con PostgreSQL. Verifica la contraseña y credenciales en appsettings.json.");
+        logger.LogError(ex, "Error al inicializar la base de datos o sembrar datos de prueba.");
     }
 }
 

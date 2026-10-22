@@ -71,10 +71,16 @@ Punto de entrada de la aplicación mediante API RESTful.
 
 ### Prerrequisitos
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
-- Servidor [PostgreSQL](https://www.postgresql.org/) en ejecución
+- Servidor [PostgreSQL](https://www.postgresql.org/) en ejecución o [Docker](https://www.docker.com/)
+
+### Levantar PostgreSQL con Docker (Opcional y Recomendado)
+Si tienes Docker instalado, puedes iniciar PostgreSQL al instante con la configuración requerida ejecutando en la raíz:
+```bash
+docker compose up -d
+```
 
 ### Configuración de `appsettings.json`
-Edita el archivo `src/Firmeza.Presentation/appsettings.json` con tus credenciales:
+El archivo `src/Firmeza.Presentation/appsettings.json` viene listo por defecto:
 
 ```json
 {
@@ -82,7 +88,7 @@ Edita el archivo `src/Firmeza.Presentation/appsettings.json` con tus credenciale
     "DefaultConnection": "Host=localhost;Port=5432;Database=firmezadb;Username=postgres;Password=12345"
   },
   "JwtSettings": {
-    "SecretKey": "TuClaveSecretaSuperSeguraDeMasDe32Caracteres!",
+    "SecretKey": "FirmezaSuperSecretKeyParaTokensJWTConMasDe32Caracteres!",
     "Issuer": "FirmezaApi",
     "Audience": "FirmezaClients",
     "DurationInMinutes": 60,
@@ -93,17 +99,13 @@ Edita el archivo `src/Firmeza.Presentation/appsettings.json` con tus credenciale
 
 ---
 
-## 🚀 Migraciones y Creación de Base de Datos
+## 🚀 Creación Automática de Base de Datos y Datos de Prueba (Seeding)
 
-Si tienes instalado `dotnet-ef`, ejecuta estos comandos en la raíz del proyecto para generar y aplicar la base de datos en PostgreSQL:
+**¡No necesitas ejecutar scripts manuales ni migraciones previas en nuevas máquinas!**
 
-```bash
-# 1. Crear la migración inicial
-dotnet ef migrations add InitialCreate --project src/Firmeza.Infrastructure --startup-project src/Firmeza.Presentation
-
-# 2. Aplicar la migración a la base de datos
-dotnet ef database update --project src/Firmeza.Infrastructure --startup-project src/Firmeza.Presentation
-```
+Al ejecutar el proyecto por primera vez en cualquier computadora, la aplicación:
+1. Crea automáticamente la base de datos `firmezadb` y todas sus tablas si aún no existen (`context.Database.EnsureCreated()`).
+2. Ejecuta el sembrador automático (`DatabaseSeeder`), inyectando roles, usuarios de prueba con contraseñas seguras, categorías, productos de catálogo, clientes y ventas iniciales.
 
 ---
 
@@ -118,9 +120,8 @@ dotnet ef database update --project src/Firmeza.Infrastructure --startup-project
    ```bash
    dotnet test Firmeza.Backend.slnx
    ```
-   *Ejecuta 31 pruebas unitarias sobre entidades de dominio, value objects (Money, Email), stock de productos y el servicio transaccional de ventas con despacho de comprobantes SMTP.*
 
-3. **Iniciar la Web API:**
+3. **Iniciar la Web API (Crea y puebla la base de datos automáticamente si está vacía):**
    ```bash
    dotnet run --project src/Firmeza.Presentation
    ```
@@ -130,20 +131,71 @@ dotnet ef database update --project src/Firmeza.Infrastructure --startup-project
 
 ---
 
-## 🔐 Guía de Uso con Swagger y JWT
+## 🔐 Cuentas de Prueba Pre-configuradas
 
-1. **Registrar un usuario:**
-   - Dirígete al endpoint `POST /api/auth/register`.
-   - Envía los datos requeridos (email, password, nombre, apellido, rol).
-   - Recibirás una respuesta con el token JWT.
+Al iniciar la aplicación ya tienes disponibles los siguientes usuarios por defecto para autenticarte directamente en `POST /api/auth/login`:
 
-2. **Iniciar sesión:**
-   - Puedes usar `POST /api/auth/login` con tus credenciales para obtener un nuevo token.
+### 1. Usuario Administrador (Control Total)
+- **Email:** `admin@firmeza.com`
+- **Contraseña:** `Admin123*`
+- **Rol:** `Admin`
+- **Uso:** Creación y modificación de categorías, productos, consulta global de ventas, auditoría y administración de usuarios.
 
-3. **Autenticar Swagger:**
-   - Haz clic en el botón verde **`Authorize`** (ubicado en la esquina superior derecha de Swagger).
-   - En el campo de texto ingresa el token JWT recibido.
-   - Haz clic en **Authorize** y luego **Close**.
+```json
+{
+  "email": "admin@firmeza.com",
+  "password": "Admin123*"
+}
+```
 
-4. **Probar los Endpoints:**
-   - Ahora puedes crear categorías, productos, clientes y registrar ventas protegidas por el token JWT.
+### 2. Usuario Vendedor / Operativo (Gestión Comercial)
+- **Email:** `vendedor@firmeza.com`
+- **Contraseña:** `Vendedor123*`
+- **Rol:** `Vendedor`
+- **Uso:** Gestión de clientes, consulta de inventario, emisión y cancelación de ventas.
+
+```json
+{
+  "email": "vendedor@firmeza.com",
+  "password": "Vendedor123*"
+}
+```
+
+### 3. Usuario Cliente (Compras y Consultas)
+- **Email:** `cliente@firmeza.com`
+- **Contraseña:** `Cliente123*`
+- **Rol:** `Cliente` (Asociado al cliente *Laura Morales Sánchez*)
+- **Uso:** Consulta de catálogo público y seguimiento de pedidos o compras personales.
+
+```json
+{
+  "email": "cliente@firmeza.com",
+  "password": "Cliente123*"
+}
+```
+
+---
+
+## 🧪 Guía Rápida de Pruebas con Swagger y cURL
+
+### Opción A: Probar desde Swagger UI
+1. Inicia sesión desde el endpoint `POST /api/auth/login` enviando las credenciales de `admin@firmeza.com` o `vendedor@firmeza.com`.
+2. Copia el valor de la propiedad `token` que retorna la respuesta.
+3. Haz clic en el botón verde **`Authorize`** (ubicado en la esquina superior derecha de Swagger).
+4. En el campo de texto ingresa el token JWT recibido.
+5. Haz clic en **Authorize** y luego **Close**.
+6. Ahora todos los endpoints protegidos (`/api/categories`, `/api/products`, `/api/customers`, `/api/sales`) funcionarán con tu token.
+
+### Opción B: Probar directamente con cURL / Terminal
+```bash
+# 1. Obtener Token JWT con el usuario Admin
+TOKEN=$(curl -s -X POST http://localhost:5293/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"admin@firmeza.com","password":"Admin123*"}' | jq -r .token)
+
+# 2. Consultar lista de productos
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5293/api/products | jq .
+
+# 3. Consultar ventas registradas
+curl -s -H "Authorization: Bearer $TOKEN" http://localhost:5293/api/sales | jq .
+```
