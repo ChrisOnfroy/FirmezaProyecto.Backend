@@ -9,7 +9,7 @@ namespace Firmeza.UnitTests.Services;
 public class ExportServicesTests
 {
     [Fact]
-    public async Task ExportProductsToExcelAsync_WithValidProducts_ReturnsNonEmptyExcelByteArray()
+    public async Task ExportPriceListToExcelAsync_WithValidProducts_ReturnsNonEmptyExcelByteArray()
     {
         // Arrange
         var service = new ExcelExportService();
@@ -34,7 +34,63 @@ public class ExportServicesTests
                 Description = "Acero de refuerzo grado 60",
                 Price = 38900m,
                 Currency = "COP",
-                Stock = 150,
+                Stock = 0,
+                IsActive = true
+            }
+        };
+
+        // Act
+        var result = await service.ExportPriceListToExcelAsync(sampleProducts);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Length.Should().BeGreaterThan(1000); // Archivo XLSX válido con compresión zip
+    }
+
+    [Fact]
+    public async Task ExportInventoryReportToExcelAsync_WithValidProducts_ReturnsNonEmptyExcelByteArray()
+    {
+        // Arrange
+        var service = new ExcelExportService();
+        var sampleProducts = new List<ProductDto>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Cemento Gris Uso General Argos 50 Kg",
+                CategoryName = "Cemento y Mampostería",
+                Description = "Cemento Portland de alta resistencia",
+                Price = 34500m,
+                Currency = "COP",
+                Stock = 200,
+                IsActive = true
+            }
+        };
+
+        // Act
+        var result = await service.ExportInventoryReportToExcelAsync(sampleProducts);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Length.Should().BeGreaterThan(1000);
+    }
+
+    [Fact]
+    public async Task ExportProductsToExcelAsync_WithValidProducts_ReturnsNonEmptyExcelByteArray()
+    {
+        // Arrange
+        var service = new ExcelExportService();
+        var sampleProducts = new List<ProductDto>
+        {
+            new()
+            {
+                Id = Guid.NewGuid(),
+                Name = "Cemento Gris Uso General Argos 50 Kg",
+                CategoryName = "Cemento y Mampostería",
+                Description = "Cemento Portland de alta resistencia",
+                Price = 34500m,
+                Currency = "COP",
+                Stock = 200,
                 IsActive = true
             }
         };
@@ -44,7 +100,7 @@ public class ExportServicesTests
 
         // Assert
         result.Should().NotBeNull();
-        result.Length.Should().BeGreaterThan(1000); // Archivo XLSX válido con compresión zip
+        result.Length.Should().BeGreaterThan(1000);
     }
 
     [Fact]
@@ -87,7 +143,6 @@ public class ExportServicesTests
         // Assert
         result.Should().NotBeNull();
         result.Length.Should().BeGreaterThan(500);
-        // Header de archivo PDF es %PDF (0x25, 0x50, 0x44, 0x46)
         result.Take(4).Should().BeEquivalentTo(new byte[] { 0x25, 0x50, 0x44, 0x46 });
     }
 

@@ -20,6 +20,10 @@ public class ProductsController : ControllerBase
         _excelExportService = excelExportService;
     }
 
+    /// <summary>
+    /// Descarga la lista oficial de precios para clientes en formato Excel (Público: solo productos y precios).
+    /// No expone inventario físico ni datos financieros del negocio.
+    /// </summary>
     [HttpGet("export/excel")]
     [AllowAnonymous]
     public async Task<IActionResult> ExportToExcel([FromQuery] Guid? categoryId, CancellationToken cancellationToken)
@@ -28,8 +32,28 @@ public class ProductsController : ControllerBase
             ? await _productService.GetByCategoryIdAsync(categoryId.Value, cancellationToken)
             : await _productService.GetAllAsync(cancellationToken);
 
-        var fileBytes = await _excelExportService.ExportProductsToExcelAsync(products, cancellationToken);
-        var fileName = $"Catalogo_Productos_Firmeza_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
+        // A los clientes solo se les muestran productos activos
+        var activeProducts = products.Where(p => p.IsActive).ToList();
+
+        var fileBytes = await _excelExportService.ExportPriceListToExcelAsync(activeProducts, cancellationToken);
+        var fileName = $"Lista_Precios_Firmeza_{DateTime.Now:yyyyMMdd}.xlsx";
+
+        return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+    }
+
+    /// <summary>
+    /// Reporte interno de auditoría de inventario con existencias físicas y valorización económica (Exclusivo para administración).
+    /// </summary>
+    [HttpGet("export/inventory-report")]
+    [Authorize]
+    public async Task<IActionResult> ExportInventoryReport([FromQuery] Guid? categoryId, CancellationToken cancellationToken)
+    {
+        var products = categoryId.HasValue
+            ? await _productService.GetByCategoryIdAsync(categoryId.Value, cancellationToken)
+            : await _productService.GetAllAsync(cancellationToken);
+
+        var fileBytes = await _excelExportService.ExportInventoryReportToExcelAsync(products, cancellationToken);
+        var fileName = $"Reporte_Inventario_Interno_{DateTime.Now:yyyyMMdd_HHmm}.xlsx";
 
         return File(fileBytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
     }
