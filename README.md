@@ -12,6 +12,9 @@ El sistema está dividido en cuatro capas desacopladas que respetan el principio
 Firmeza.Backend/
 ├── Firmeza.Backend.slnx
 ├── README.md
+├── docs/
+│   ├── ARQUITECTURA_Y_CODIGO.md     # Guía detallada de cada capa, código y reglas (Markdown)
+│   └── Guia_Arquitectura_Limpia_Firmeza.docx # Documento formal para Microsoft Word
 ├── src/
 │   ├── Firmeza.Domain/              # Núcleo del Negocio (Entidades, Value Objects, Enums, Excepciones)
 │   ├── Firmeza.Application/         # Casos de Uso, DTOs e Interfaces de Repositorios/Servicios
